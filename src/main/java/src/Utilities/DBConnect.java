@@ -1,41 +1,53 @@
 package src.Utilities;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.Properties;
 
+
+@Slf4j
+@Component
 public class DBConnect {
-    public Connection prepareConn() throws FileNotFoundException, IOException {
-    Connection con = null;
-    try {
-        Properties prop = new Properties();
-        InputStream input1 = null;
-        input1 = new FileInputStream("vcbDormantconfig.properties");
-        prop.load(input1);
-        String dbuser = prop.getProperty("dbuser");
-        String dbpass = prop.getProperty("dbpass");
-        String dbport = prop.getProperty("dbport");
-        String dbhost = prop.getProperty("dbhost");
-        String dbsid = prop.getProperty("dbsid");
-        String url = "jdbc:oracle:thin:@" + dbhost + ":" + dbport + ":" + dbsid;
-        String username = dbuser;
-        String password = dbpass;
-        Class.forName("oracle.jdbc.driver.OracleDriver");
-        con = DriverManager.getConnection(url, username, password);
-        System.out.println("connection 1:" + con);
-    } catch (Exception ex) {
-        System.out.println("Properties file not loaded:" + ex);
-    }
-    return con;
-}
 
-    public void closeConn(Connection con) throws SQLException, IOException {
-        if (con != null)
-            con.close();
+    Configurations cf = new Configurations();
+    String key = cf.getProperties().getProperty("enc.key");
+    String initVector = cf.getProperties().getProperty("enc.initVector");
+
+    private final String dbclass = cf.getProperties().getProperty("db.class");
+    private final String ip = cf.getProperties().getProperty("db.ip");
+    private final String port = cf.getProperties().getProperty("db.port");
+    private final String databaseName = cf.getProperties().getProperty("db.database");
+    private final String username = cf.getProperties().getProperty("db.username");
+    private final String password = cf.getProperties().getProperty("db.password");
+
+    public Connection dbConnection() {
+        Connection conn = null;
+        try {
+            String driver = Encryptor.decrypt(key, initVector, dbclass);
+            String host = Encryptor.decrypt(key, initVector, ip);
+            String portNumber = Encryptor.decrypt(key, initVector, port);
+            String sid = Encryptor.decrypt(key, initVector, databaseName);
+            // String sid = Encryptor.decrypt(key, initVector, databaseName);
+            String url = "jdbc:oracle:thin:@" + host + ":" + portNumber + ":" + sid;
+            // String url = "jdbc:mariadb://" + host + ":" + portNumber + "/" + sid;
+            Class.forName(driver);
+            String uname = Encryptor.decrypt(key, initVector, username);
+            String pass = Encryptor.decrypt(key, initVector, password);
+
+            conn = DriverManager.getConnection(url, uname, pass);
+        } catch (Exception e) {
+            log.error("DB Error {}", e.getMessage(), e);
+        }
+        return conn;
+    }
+
+    public void closeConn(Connection con) {
+        try {
+            if (con != null) con.close();
+        } catch (Exception ex) {
+            log.error("Error closing connection: {}", ex.getMessage());
+        }
     }
 }
