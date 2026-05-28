@@ -9,6 +9,10 @@ version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+
+    maven {
+        url "https://jaspersoft.jfrog.io/jaspersoft/third-party-ce-artifacts/"
+    }
 }
 java {
     toolchain {
@@ -16,57 +20,31 @@ java {
     }
 }
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.9.1')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    implementation 'com.sun.mail:jakarta.mail:2.0.1'
-    implementation 'log4j:log4j:1.2.17'
-    implementation 'com.oracle.database.jdbc:ojdbc8:21.1.0.0'
-    implementation 'com.sun.activation:jakarta.activation:2.0.1'
-
-    implementation 'com.sun.mail:jakarta.mail:2.0.1'
-
-    implementation 'com.sun.activation:jakarta.activation:2.0.1'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-json'
-
-    implementation 'com.github.cage:cage:1.0'
-    // --- Security ---
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.security:spring-security-ldap'
-
-    // --- Swagger / OpenAPI for Spring MVC ---
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+    implementation 'com.sun.mail:javax.mail:1.6.2'
+    implementation 'javax.activation:activation:1.1.1'
+    implementation 'log4j:log4j:1.2.17'
+    implementation 'com.oracle.database.jdbc:ojdbc8:21.1.0.0'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.15'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-
-    // --- Database driver (Oracle) ---
-    runtimeOnly 'com.oracle.database.jdbc:ojdbc11:23.3.0.23.09'
-
-    // --- JSON, Crypto, and Misc Utilities ---
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
     implementation 'commons-codec:commons-codec:1.16.1'
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
 
-    // --- XML and JAXB ---
-    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.2'
-    implementation 'org.glassfish.jaxb:jaxb-runtime:4.0.5'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+    implementation 'net.sf.jasperreports:jasperreports:6.20.0'
+    implementation 'com.github.cage:cage:1.0'
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
-    // --- JasperReports ---
-    implementation 'net.sf.jasperreports:jasperreports:6.21.3'
-
-    // --- Lombok ---
-    compileOnly 'org.projectlombok:lombok:1.18.32'
-    annotationProcessor 'org.projectlombok:lombok:1.18.32'
-    implementation 'org.mariadb.jdbc:mariadb-java-client:3.4.1'
-
-    // --- Testing ---
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'io.projectreactor:reactor-test'
 }
 
 test {

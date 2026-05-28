@@ -1,27 +1,27 @@
-package src.Logic;
+package src.Main.Logic;
 
-import jakarta.mail.*;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
-import src.Utilities.Configurations;
-import src.Utilities.DBConnect;
+import org.springframework.stereotype.Service;
+import src.Main.Utilities.Configurations;
+import src.Main.Utilities.DBConnect;
 
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Properties;
 
-public class DormancyEmailSender {
-    public static void main(String[] args) {
+@Service
+public class dormancyEmailSender {
+
+    public void sendDormancyEmails() {
 
         Configurations config = new Configurations();
         Properties prop = config.getProperties();
 
-        String beforeDormantSql =
-                prop.getProperty("db.query.beforeDormant");
-
-        String alreadyDormantSql =
-                prop.getProperty("db.query.alreadyDormant");
+        String beforeDormantSql = prop.getProperty("db.query.beforeDormant");
+        String alreadyDormantSql = prop.getProperty("db.query.alreadyDormant");
 
         DBConnect db = new DBConnect();
 
@@ -31,74 +31,85 @@ public class DormancyEmailSender {
         ResultSet rs1 = null;
         ResultSet rs2 = null;
 
+        int beforeCount = 0;
+        int alreadyCount = 0;
+        int beforeSuccess = 0;
+        int alreadySuccess = 0;
+        int failed = 0;
+
         try {
 
             conn = db.dbConnection();
+            System.out.println("Database connection established successfully.");
 
-            // =========================================
-            // ACCOUNTS ABOUT TO GO DORMANT
-            // =========================================
+            // BEFORE DORMANT
             ps1 = conn.prepareStatement(beforeDormantSql);
-
             rs1 = ps1.executeQuery();
+
+            System.out.println("Fetching accounts about to go dormant...");
 
             while (rs1.next()) {
 
-                String email =
-                        rs1.getString("EMAIL");
+                beforeCount++;
 
-                String account =
-                        rs1.getString("ACCOUNT_NUMBER");
+                String email = rs1.getString("EMAIL");
+                String account = rs1.getString("ACCOUNT_NUMBER");
 
                 if (email != null && !email.trim().isEmpty()) {
 
-                    sendEmail(
-                            prop,
-                            email,
-                            "DORMANCY ALERT | ACCOUNT " + account,
-                            buildBeforeDormantEmail(account)
-                    );
+                    try {
+                        sendEmail(prop, email,
+                                "DORMANCY ALERT | ACCOUNT " + account,
+                                buildBeforeDormantEmail(account));
 
-                    System.out.println(
-                            "30-Day Dormancy Alert Sent To: "
-                                    + email
-                    );
+                        beforeSuccess++;
+                        System.out.println("Sent: " + email);
+
+                    } catch (Exception e) {
+                        failed++;
+                        System.out.println("FAILED: " + email);
+                        e.printStackTrace();
+                    }
                 }
             }
 
-            // =========================================
-            // ALREADY DORMANT ACCOUNTS
-            // =========================================
-            ps2 = conn.prepareStatement(alreadyDormantSql);
+            System.out.println("Before-dormant processed: " + beforeCount);
 
+            // ALREADY DORMANT
+            ps2 = conn.prepareStatement(alreadyDormantSql);
             rs2 = ps2.executeQuery();
+
+            System.out.println("Fetching already dormant accounts...");
 
             while (rs2.next()) {
 
-                String email =
-                        rs2.getString("EMAIL");
+                alreadyCount++;
 
-                String account =
-                        rs2.getString("ACCOUNT_NUMBER");
+                String email = rs2.getString("EMAIL");
+                String account = rs2.getString("ACCOUNT_NUMBER");
 
                 if (email != null && !email.trim().isEmpty()) {
 
-                    sendEmail(
-                            prop,
-                            email,
-                            "DORMANT ACCOUNT NOTICE | ACCOUNT " + account,
-                            buildDormantEmail(account)
-                    );
+                    try {
+                        sendEmail(prop, email,
+                                "DORMANT ACCOUNT NOTICE | ACCOUNT " + account,
+                                buildDormantEmail(account));
 
-                    System.out.println(
-                            "Dormant Reminder Sent To: "
-                                    + email
-                    );
+                        alreadySuccess++;
+                        System.out.println("Sent: " + email);
+
+                    } catch (Exception e) {
+                        failed++;
+                        System.out.println("FAILED: " + email);
+                        e.printStackTrace();
+                    }
                 }
             }
 
-        } catch (Exception e) {
+            System.out.println("Already-dormant processed: " + alreadyCount);
 
+        } catch (Exception e) {
+            System.out.println("Unexpected error");
             e.printStackTrace();
 
         } finally {
@@ -106,17 +117,21 @@ public class DormancyEmailSender {
             try {
                 if (rs1 != null) rs1.close();
                 if (rs2 != null) rs2.close();
-
                 if (ps1 != null) ps1.close();
                 if (ps2 != null) ps2.close();
-
                 if (conn != null) conn.close();
-
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+
+            System.out.println("========== SUMMARY ==========");
+            System.out.println("Before sent: " + beforeSuccess);
+            System.out.println("Already sent: " + alreadySuccess);
+            System.out.println("Failed: " + failed);
         }
     }
+
+    // ================= EMAIL METHOD =================
     private static void sendEmail(
             Properties prop,
             String to,
@@ -125,16 +140,12 @@ public class DormancyEmailSender {
     ) throws Exception {
 
         String host = prop.getProperty("spring.mail.host");
-        String port = prop.getProperty("spring.mail.port");
         String username = prop.getProperty("spring.mail.username");
         String password = prop.getProperty("spring.mail.password");
 
         Properties props = new Properties();
-
         props.put("mail.smtp.host", host);
-        props.put("mail.smtp.port", port);
         props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "false");
 
         Session session = Session.getInstance(props,
                 new Authenticator() {
